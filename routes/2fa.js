@@ -4,7 +4,7 @@
  */
 
 const insecurity = require('../lib/insecurity')
-const models = require('../models/')
+const models = require('../models')
 const otplib = require('otplib')
 const utils = require('../lib/utils')
 const challenges = require('../data/datacache').challenges
