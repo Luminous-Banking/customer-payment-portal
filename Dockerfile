@@ -7,29 +7,12 @@ deb-src [trusted=yes check-valid-until=no] https://snapshot.debian.org/archive/d
 deb     [trusted=yes check-valid-until=no] https://snapshot.debian.org/archive/debian-security/20211201T215332Z/ buster/updates main \n\
 deb-src [trusted=yes check-valid-until=no] https://snapshot.debian.org/archive/debian-security/20211201T215332Z/ buster/updates main' >> /etc/apt/sources.list
 
-RUN apt-get -y update && apt-get -y install \
-    liblog4j2-java=2.11.1-2
+RUN apt-get -y update && apt-get -y install liblog4j2-java=2.11.1-2
 
-ARG BUILD_DATE
-ARG VCS_REF
-LABEL maintainer="Bjoern Kimminich <bjoern.kimminich@owasp.org>" \
-    org.opencontainers.image.title="OWASP Juice Shop" \
-    org.opencontainers.image.description="Probably the most modern and sophisticated insecure web application" \
-    org.opencontainers.image.authors="Bjoern Kimminich <bjoern.kimminich@owasp.org>" \
-    org.opencontainers.image.vendor="Open Web Application Security Project" \
-    org.opencontainers.image.documentation="https://help.owasp-juice.shop" \
-    org.opencontainers.image.licenses="MIT" \
-    org.opencontainers.image.version="12.3.0" \
-    org.opencontainers.image.url="https://owasp-juice.shop" \
-    org.opencontainers.image.source="https://github.com/clintonherget/juice-shop" \
-    org.opencontainers.image.revision=$VCS_REF \
-    org.opencontainers.image.created=$BUILD_DATE \
-    io.snyk.containers.image.dockerfile="/Dockerfile"
-
-RUN addgroup --system --gid 1001 juicer && \
-    adduser juicer --system --uid 1001 --ingroup juicer
-COPY --chown=juicer . /juice-shop
-WORKDIR /juice-shop
+RUN addgroup --system --gid 1001 juicer && adduser juicer --system --uid 1001 --ingroup juicer
+RUN git clone https://github.com/clintonherget/juice-shop juice
+RUN chown juicer juice
+WORKDIR ./juice
 RUN npm install --production --unsafe-perm
 RUN npm dedupe
 RUN rm -rf frontend/node_modules
