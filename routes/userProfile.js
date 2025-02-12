@@ -51,6 +51,7 @@ module.exports = function getUserProfile () {
             'Content-Security-Policy': CSP
           })
 
+	  // This is where the issue lies
           res.send(fn(user.dataValues))
         }).catch(error => {
           next(error)
