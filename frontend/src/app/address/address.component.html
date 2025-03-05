@@ -7,6 +7,7 @@
   <h1 translate *ngIf="showNextButton">TITLE_SELECT_ADDRESS</h1>
   <h1 translate *ngIf="!showNextButton">MY_SAVED_ADRESSES</h1>
   <mat-table [dataSource]="dataSource" *ngIf="addressExist">
+    <table><tr><td>Cell</td></tr></table>
     <ng-container matColumnDef="Selection">
       <mat-header-cell *matHeaderCellDef fxFlex="20%"></mat-header-cell>
       <mat-cell *matCellDef="let element; let row" fxFlex="20%">
