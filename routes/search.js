@@ -16,6 +16,7 @@ module.exports = function searchProducts () {
         const dataString = JSON.stringify(products)
         if (utils.notSolved(challenges.unionSqlInjectionChallenge)) {
           let solved = true
+          let unsolved = false
           models.User.findAll().then(data => {
             const users = utils.queryResultToJson(data)
             if (users.data && users.data.length) {
