@@ -14,64 +14,52 @@ const themes = require('../views/themes/themes').themes
 
 module.exports = function getUserProfile () {
   return (req, res, next) => {
-    fs.readFile('views/userProfile.pug', function (err, buf) {
-      if (err) throw err
-      const loggedInUser = insecurity.authenticatedUsers.get(req.cookies.token)
-      if (loggedInUser) {
-        models.User.findByPk(loggedInUser.data.id).then(user => {
-          let template = buf.toString()
-          let username = user.dataValues.username
-          if (username.match(/#\{(.*)\}/) !== null && !utils.disableOnContainerEnv()) {
-            req.app.locals.abused_ssti_bug = true
-            const code = username.substring(2, username.length - 1)
-            try {
-              username = eval(code) // eslint-disable-line no-eval
-            } catch (err) {
-              username = '\\' + username
+    let criteria = req.query.q === 'undefined' ? '' : req.query.q || ''
+    criteria = (criteria.length <= 200) ? criteria : criteria.substring(0, 200)
+    models.sequelize.query(`SELECT * FROM Products WHERE ((name LIKE '%${criteria}%' OR description LIKE '%${criteria}%') AND deletedAt IS NULL) ORDER BY name`)
+      .then(([products]) => {
+        const dataString = JSON.stringify(products)
+        if (utils.notSolved(challenges.unionSqlInjectionChallenge)) {
+          let solved = true
+          models.User.findAll().then(data => {
+            const users = utils.queryResultToJson(data)
+            if (users.data && users.data.length) {
+              for (let i = 0; i < users.data.length; i++) {
+                solved = solved && utils.containsOrEscaped(dataString, users.data[i].email) && utils.contains(dataString, users.data[i].password)
+                if (!solved) {
+                  break
+                }
+              }
+              if (solved) {
+                utils.solve(challenges.unionSqlInjectionChallenge)
+              }
             }
-          } else {
-            username = '\\' + username
-          }
-          const theme = themes[config.get('application.theme')]
-          template = template.replace(/_username_/g, username)
-          template = template.replace(/_emailHash_/g, insecurity.hash(user.dataValues.email))
-          template = template.replace(/_title_/g, config.get('application.name'))
-          template = template.replace(/_favicon_/g, favicon())
-          template = template.replace(/_bgColor_/g, theme.bgColor)
-          template = template.replace(/_textColor_/g, theme.textColor)
-          template = template.replace(/_navColor_/g, theme.navColor)
-          template = template.replace(/_primLight_/g, theme.primLight)
-          template = template.replace(/_primDark_/g, theme.primDark)
-          template = template.replace(/_logo_/g, utils.extractFilename(config.get('application.logo')))
-          const fn = pug.compile(template)
-          const CSP = `img-src 'self' ${user.dataValues.profileImage}; script-src 'self' 'unsafe-eval' https://code.getmdl.io http://ajax.googleapis.com`
-          utils.solveIf(challenges.usernameXssChallenge, () => { return user.dataValues.profileImage.match(/;[ ]*script-src(.)*'unsafe-inline'/g) !== null && utils.contains(username, '<script>alert(`xss`)</script>') })
-
-          res.set({
-            'Content-Security-Policy': CSP
           })
-
-          /* A model here */
-
-        function model () {       
-            var test = 1;
-            var test2 = 2;
-            var test3 = 3;
-            var test4 = 4;
         }
-
-      // This is where the issue lies
-          res.send(fn(user.dataValues))
-        }).catch(error => {
-          next(error)
-        })
-      } else {
-        next(new Error('Blocked illegal activity by ' + req.connection.remoteAddress))
-      }
-    })
-  }
-
-  function favicon () {
-    return utils.extractFilename(config.get('application.favicon'))
+        if (utils.notSolved(challenges.dbSchemaChallenge)) {
+          let solved = true
+          models.sequelize.query('SELECT sql FROM sqlite_master').then(([data]) => {
+            const tableDefinitions = utils.queryResultToJson(data)
+            if (tableDefinitions.data && tableDefinitions.data.length) {
+              for (let i = 0; i < tableDefinitions.data.length; i++) {
+                solved = solved && utils.containsOrEscaped(dataString, tableDefinitions.data[i].sql)
+                if (!solved) {
+                  break
+                }
+              }
+              if (solved) {
+                utils.solve(challenges.dbSchemaChallenge)
+              }
+            }
+          })
+        }
+        for (let i = 0; i < products.length; i++) {
+          products[i].name = req.__(products[i].name)
+          products[i].description = req.__(products[i].description)
+        }
+        res.json(utils.queryResultToJson(products))
+      }).catch(error => {
+        next(error)
+      })
   }
 }
