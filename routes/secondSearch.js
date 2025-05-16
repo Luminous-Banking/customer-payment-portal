@@ -28,6 +28,7 @@ searchForm.addEventListener("submit", async (event) => {
     });
 });
 
+// Add event listener to the logout button
 const logoutButton = document.querySelector("#logoutButton");
 logoutButton.addEventListener("click", () => {
     window.location.href = "/logout";
