@@ -27,3 +27,8 @@ searchForm.addEventListener("submit", async (event) => {
         resultsContainer.appendChild(resultItem);
     });
 });
+
+const logoutButton = document.querySelector("#logoutButton");
+logoutButton.addEventListener("click", () => {
+    window.location.href = "/logout";
+});
