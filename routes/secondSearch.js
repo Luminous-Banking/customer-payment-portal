@@ -33,3 +33,14 @@ const logoutButton = document.querySelector("#logoutButton");
 logoutButton.addEventListener("click", () => {
     window.location.href = "/logout";
 });
+
+// Add event listener to the profile button
+const profileButton = document.querySelector("#profileButton");
+profileButton.addEventListener("click", () => {
+    window.location.href = "/profile";
+});
+// Add event listener to the home button
+const homeButton = document.querySelector("#homeButton");
+homeButton.addEventListener("click", () => {
+    window.location.href = "/home";
+});
